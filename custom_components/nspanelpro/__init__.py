@@ -34,6 +34,10 @@ PLATFORMS: list[Platform] = []
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the NSPanel Pro component."""
     hass.data.setdefault(DOMAIN, {})
+    
+    # Register frontend once at startup
+    await _async_register_frontend(hass)
+    
     return True
 
 
@@ -44,9 +48,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "subscriptions": [],
         "config": dict(entry.data),
     }
-
-    # Register the frontend card
-    await _async_register_frontend(hass)
 
     # Set up services
     await async_setup_services(hass)
@@ -71,8 +72,12 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     if unload_ok:
         hass.data[DOMAIN].pop(entry.entry_id)
-        # Unload services if no more entries
-        if not hass.data[DOMAIN]:
+        
+        # Check if there are any config entries left
+        # Filter out non-entry keys like 'frontend_registered'
+        has_entries = any(k for k in hass.data[DOMAIN] if k != "frontend_registered")
+        
+        if not has_entries:
             await async_unload_services(hass)
 
     return unload_ok
