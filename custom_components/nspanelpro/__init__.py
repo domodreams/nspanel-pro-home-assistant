@@ -106,7 +106,8 @@ async def _async_register_frontend(hass: HomeAssistant) -> None:
 
 async def _async_add_lovelace_resource(hass: HomeAssistant) -> None:
     """Add the card to Lovelace resources."""
-    url = "/nspanelpro/nspanelpro-config-card.js"
+    # Add version to force cache refresh
+    url = "/nspanelpro/nspanelpro-config-card.js?v=1.0.3"
     
     # Get Lovelace resources collection
     # This key is used by the frontend component to store resources
@@ -120,11 +121,21 @@ async def _async_add_lovelace_resource(hass: HomeAssistant) -> None:
     if not resources.loaded:
         await resources.async_load()
 
-    # Check if already exists
+    # Check if already exists or needs update
     for resource in resources.async_items():
-        if resource["url"] == url:
-            _LOGGER.debug("Lovelace resource already registered: %s", url)
-            return
+        if resource["url"].startswith("/nspanelpro/nspanelpro-config-card.js"):
+            if resource["url"] == url:
+                _LOGGER.debug("Lovelace resource already registered: %s", url)
+                return
+            else:
+                # Update existing resource with new version
+                _LOGGER.debug("Updating Lovelace resource from %s to %s", resource["url"], url)
+                try:
+                    await resources.async_update_item(resource["id"], {"url": url})
+                    return
+                except Exception as err:
+                    _LOGGER.warning("Could not update Lovelace resource: %s", err)
+                    return
 
     # Add resource
     try:
