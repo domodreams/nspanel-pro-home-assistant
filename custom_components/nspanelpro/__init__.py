@@ -126,6 +126,20 @@ async def _async_register_frontend(hass: HomeAssistant) -> None:
 
     hass.data[DOMAIN]["frontend_registered"] = True
     _LOGGER.info("NSPanel Pro frontend card registration complete")
+    
+    # Notify user to refresh browser
+    hass.components.persistent_notification.async_create(
+        "NSPanel Pro configuration card has been registered.\n\n"
+        "**Please refresh your browser (Ctrl+F5 or Cmd+Shift+R)** to load the card.\n\n"
+        "Then add the card to your dashboard:\n"
+        "```yaml\n"
+        "type: custom:nspanelpro-config-card\n"
+        "title: NSPanel Pro Configuration\n"
+        "panel_id: panel1\n"
+        "```",
+        title="NSPanel Pro - Browser Refresh Required",
+        notification_id="nspanelpro_refresh_required",
+    )
 
 
 async def _async_add_lovelace_resource(hass: HomeAssistant) -> None:
@@ -133,7 +147,7 @@ async def _async_add_lovelace_resource(hass: HomeAssistant) -> None:
     _LOGGER.info("Attempting to register Lovelace resource")
     
     # Add version to force cache refresh
-    url = "/nspanelpro/nspanelpro-config-card.js?v=1.0.7"
+    url = "/nspanelpro/nspanelpro-config-card.js?v=1.0.8"
     _LOGGER.debug("Resource URL: %s", url)
     
     # Get Lovelace resources collection
