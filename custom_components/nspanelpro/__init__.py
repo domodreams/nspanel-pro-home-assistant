@@ -34,10 +34,6 @@ PLATFORMS: list[Platform] = []
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the NSPanel Pro component."""
     hass.data.setdefault(DOMAIN, {})
-    
-    # Register frontend once at startup
-    await _async_register_frontend(hass)
-    
     return True
 
 
@@ -48,6 +44,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "subscriptions": [],
         "config": dict(entry.data),
     }
+
+    # Register frontend (only once, protected by guard in the function)
+    await _async_register_frontend(hass)
 
     # Set up services
     await async_setup_services(hass)
@@ -85,6 +84,11 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def _async_register_frontend(hass: HomeAssistant) -> None:
     """Register the frontend card."""
+    # Check if already registered to prevent duplicates
+    if hass.data[DOMAIN].get("frontend_registered"):
+        _LOGGER.debug("Frontend already registered, skipping")
+        return
+    
     _LOGGER.info("Starting frontend registration for NSPanel Pro")
     
     # Serve the card JS from the integration
@@ -125,7 +129,7 @@ async def _async_add_lovelace_resource(hass: HomeAssistant) -> None:
     _LOGGER.info("Attempting to register Lovelace resource")
     
     # Add version to force cache refresh
-    url = "/nspanelpro/nspanelpro-config-card.js?v=1.0.4"
+    url = "/nspanelpro/nspanelpro-config-card.js?v=1.0.6"
     _LOGGER.debug("Resource URL: %s", url)
     
     # Get Lovelace resources collection
