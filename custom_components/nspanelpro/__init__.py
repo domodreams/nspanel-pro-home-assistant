@@ -85,67 +85,102 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def _async_register_frontend(hass: HomeAssistant) -> None:
     """Register the frontend card."""
+    _LOGGER.info("Starting frontend registration for NSPanel Pro")
+    
     # Serve the card JS from the integration
+    card_path = hass.config.path("custom_components/nspanelpro/www/nspanelpro-config-card.js")
+    _LOGGER.debug("Card file path: %s", card_path)
+    
+    # Check if file exists
+    import os
+    if os.path.exists(card_path):
+        _LOGGER.info("Card file exists at: %s", card_path)
+    else:
+        _LOGGER.error("Card file NOT FOUND at: %s", card_path)
+        return
+    
     try:
         await hass.http.async_register_static_paths([
             StaticPathConfig(
                 "/nspanelpro/nspanelpro-config-card.js",
-                hass.config.path("custom_components/nspanelpro/www/nspanelpro-config-card.js"),
+                card_path,
                 cache_headers=False,
             )
         ])
+        _LOGGER.info("Successfully registered static path: /nspanelpro/nspanelpro-config-card.js")
     except RuntimeError as err:
-        _LOGGER.debug("Could not register static path (likely already registered): %s", err)
+        _LOGGER.warning("Could not register static path (likely already registered): %s", err)
+    except Exception as err:
+        _LOGGER.error("Unexpected error registering static path: %s", err, exc_info=True)
 
     # Register as a Lovelace resource
     await _async_add_lovelace_resource(hass)
 
     hass.data[DOMAIN]["frontend_registered"] = True
-    _LOGGER.info("NSPanel Pro frontend card registered at /nspanelpro/nspanelpro-config-card.js")
+    _LOGGER.info("NSPanel Pro frontend card registration complete")
 
 
 async def _async_add_lovelace_resource(hass: HomeAssistant) -> None:
     """Add the card to Lovelace resources."""
+    _LOGGER.info("Attempting to register Lovelace resource")
+    
     # Add version to force cache refresh
-    url = "/nspanelpro/nspanelpro-config-card.js?v=1.0.3"
+    url = "/nspanelpro/nspanelpro-config-card.js?v=1.0.4"
+    _LOGGER.debug("Resource URL: %s", url)
     
     # Get Lovelace resources collection
     # This key is used by the frontend component to store resources
     resources = hass.data.get("lovelace_resources")
     
     if not resources:
-        _LOGGER.debug("Lovelace resources not available (likely in YAML mode)")
+        _LOGGER.warning("Lovelace resources not available - you may be using YAML mode")
+        _LOGGER.warning("Add this to your configuration.yaml:")
+        _LOGGER.warning("lovelace:")
+        _LOGGER.warning("  resources:")
+        _LOGGER.warning("    - url: %s", url)
+        _LOGGER.warning("      type: module")
         return
 
+    _LOGGER.debug("Lovelace resources collection found")
+    
     # Ensure resources are loaded
     if not resources.loaded:
+        _LOGGER.debug("Loading Lovelace resources...")
         await resources.async_load()
+
+    # List all current resources for debugging
+    current_resources = list(resources.async_items())
+    _LOGGER.debug("Current Lovelace resources count: %d", len(current_resources))
+    for res in current_resources:
+        _LOGGER.debug("  - %s (type: %s)", res.get("url"), res.get("res_type"))
 
     # Check if already exists or needs update
     for resource in resources.async_items():
         if resource["url"].startswith("/nspanelpro/nspanelpro-config-card.js"):
             if resource["url"] == url:
-                _LOGGER.debug("Lovelace resource already registered: %s", url)
+                _LOGGER.info("Lovelace resource already registered with correct version: %s", url)
                 return
             else:
                 # Update existing resource with new version
-                _LOGGER.debug("Updating Lovelace resource from %s to %s", resource["url"], url)
+                _LOGGER.info("Updating Lovelace resource from %s to %s", resource["url"], url)
                 try:
                     await resources.async_update_item(resource["id"], {"url": url})
+                    _LOGGER.info("Successfully updated Lovelace resource")
                     return
                 except Exception as err:
-                    _LOGGER.warning("Could not update Lovelace resource: %s", err)
+                    _LOGGER.error("Could not update Lovelace resource: %s", err, exc_info=True)
                     return
 
     # Add resource
+    _LOGGER.info("Adding new Lovelace resource: %s", url)
     try:
         await resources.async_create_item({
             "res_type": "module",
             "url": url,
         })
-        _LOGGER.info("Auto-registered Lovelace resource: %s", url)
+        _LOGGER.info("Successfully auto-registered Lovelace resource: %s", url)
     except Exception as err:
-        _LOGGER.warning("Could not auto-register Lovelace resource: %s", err)
+        _LOGGER.error("Could not auto-register Lovelace resource: %s", err, exc_info=True)
 
 
 async def _async_setup_mqtt_bridge(hass: HomeAssistant, entry: ConfigEntry) -> None:
