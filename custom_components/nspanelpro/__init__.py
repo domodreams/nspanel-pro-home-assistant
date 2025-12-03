@@ -90,9 +90,43 @@ async def _async_register_frontend(hass: HomeAssistant) -> None:
     ])
 
     # Register as a Lovelace resource
-    # This will be picked up by the frontend
+    await _async_add_lovelace_resource(hass)
+
     hass.data[DOMAIN]["frontend_registered"] = True
     _LOGGER.info("NSPanel Pro frontend card registered at /nspanelpro/nspanelpro-config-card.js")
+
+
+async def _async_add_lovelace_resource(hass: HomeAssistant) -> None:
+    """Add the card to Lovelace resources."""
+    url = "/nspanelpro/nspanelpro-config-card.js"
+    
+    # Get Lovelace resources collection
+    # This key is used by the frontend component to store resources
+    resources = hass.data.get("lovelace_resources")
+    
+    if not resources:
+        _LOGGER.debug("Lovelace resources not available (likely in YAML mode)")
+        return
+
+    # Ensure resources are loaded
+    if not resources.loaded:
+        await resources.async_load()
+
+    # Check if already exists
+    for resource in resources.async_items():
+        if resource["url"] == url:
+            _LOGGER.debug("Lovelace resource already registered: %s", url)
+            return
+
+    # Add resource
+    try:
+        await resources.async_create_item({
+            "res_type": "module",
+            "url": url,
+        })
+        _LOGGER.info("Auto-registered Lovelace resource: %s", url)
+    except Exception as err:
+        _LOGGER.warning("Could not auto-register Lovelace resource: %s", err)
 
 
 async def _async_setup_mqtt_bridge(hass: HomeAssistant, entry: ConfigEntry) -> None:
