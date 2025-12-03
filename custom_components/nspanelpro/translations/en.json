@@ -1,0 +1,34 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Add NSPanel Pro",
+        "description": "Configure your NSPanel Pro device. MQTT base topic: `{mqtt_topic}`",
+        "data": {
+          "panel_id": "Panel ID",
+          "panel_name": "Panel Name"
+        },
+        "data_description": {
+          "panel_id": "Unique identifier for this panel (used in MQTT topics)",
+          "panel_name": "Friendly name for this panel"
+        }
+      }
+    },
+    "error": {
+      "already_configured": "This panel is already configured"
+    },
+    "abort": {
+      "already_configured": "This panel is already configured"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "NSPanel Pro Options",
+        "data": {
+          "panel_name": "Panel Name"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "domain": "nspanelpro",
+  "name": "NSPanel Pro by DomoDreams",
+  "codeowners": ["@domodreams"],
+  "config_flow": true,
+  "dependencies": ["mqtt"],
+  "documentation": "https://github.com/domodreams/nspanelpro_integration",
+  "iot_class": "local_push",
+  "issue_tracker": "https://github.com/domodreams/nspanelpro_integration/issues",
+  "requirements": [],
+  "version": "1.0.0"
+}

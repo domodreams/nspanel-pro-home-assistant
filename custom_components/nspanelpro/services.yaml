@@ -1,0 +1,39 @@
+# Services for NSPanel Pro integration
+
+publish_state:
+  name: Publish State
+  description: Publish entity states to the NSPanel Pro panel via MQTT
+  fields:
+    panel_id:
+      name: Panel ID
+      description: The ID of the panel to send the state to
+      required: true
+      example: "panel1"
+      selector:
+        text:
+    entity_id:
+      name: Entity ID
+      description: The entity to publish state for
+      required: true
+      example: "light.living_room"
+      selector:
+        entity:
+
+send_config:
+  name: Send Configuration
+  description: Send panel configuration via MQTT
+  fields:
+    panel_id:
+      name: Panel ID
+      description: The ID of the panel to configure
+      required: true
+      example: "panel1"
+      selector:
+        text:
+    config:
+      name: Configuration
+      description: JSON configuration object
+      required: true
+      example: '{"entities": {"lights": ["light.living_room"]}}'
+      selector:
+        object:
