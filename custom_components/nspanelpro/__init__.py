@@ -86,13 +86,16 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def _async_register_frontend(hass: HomeAssistant) -> None:
     """Register the frontend card."""
     # Serve the card JS from the integration
-    await hass.http.async_register_static_paths([
-        StaticPathConfig(
-            "/nspanelpro/nspanelpro-config-card.js",
-            hass.config.path("custom_components/nspanelpro/www/nspanelpro-config-card.js"),
-            cache_headers=False,
-        )
-    ])
+    try:
+        await hass.http.async_register_static_paths([
+            StaticPathConfig(
+                "/nspanelpro/nspanelpro-config-card.js",
+                hass.config.path("custom_components/nspanelpro/www/nspanelpro-config-card.js"),
+                cache_headers=False,
+            )
+        ])
+    except RuntimeError as err:
+        _LOGGER.debug("Could not register static path (likely already registered): %s", err)
 
     # Register as a Lovelace resource
     await _async_add_lovelace_resource(hass)
